@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::app_state::AppState;
 use crate::config::Config;
 use crate::db::{create_pool, run_migrations, DbPool};

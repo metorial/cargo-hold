@@ -9,6 +9,4 @@ pub mod schema;
 pub mod snowflake;
 pub mod startup;
 pub mod storage;
-
-#[cfg(any(test, feature = "test-utils"))]
 pub mod test_utils;
