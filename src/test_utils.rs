@@ -5,6 +5,9 @@ use crate::config::Config;
 use crate::db::{create_pool, run_migrations, DbPool};
 use crate::snowflake::SnowflakeGeneratorWrapper;
 use crate::storage::ObjectStorageClient;
+use std::sync::Once;
+
+static INIT: Once = Once::new();
 
 pub fn create_test_config() -> Config {
     Config {
@@ -27,14 +30,19 @@ pub fn create_test_config() -> Config {
     }
 }
 
+fn init_test_db() {
+    INIT.call_once(|| {
+        let config = create_test_config();
+        let pool = create_pool(&config.database_url).expect("Failed to create test pool");
+        let mut conn = pool.get().expect("Failed to get connection");
+        run_migrations(&mut conn).expect("Failed to run migrations");
+    });
+}
+
 pub fn setup_test_db() -> DbPool {
+    init_test_db();
     let config = create_test_config();
-    let pool = create_pool(&config.database_url).expect("Failed to create test pool");
-    let mut conn = pool.get().expect("Failed to get connection");
-
-    run_migrations(&mut conn).expect("Failed to run migrations");
-
-    pool
+    create_pool(&config.database_url).expect("Failed to create test pool")
 }
 
 pub fn create_test_app_state() -> AppState {
