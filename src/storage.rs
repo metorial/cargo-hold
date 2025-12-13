@@ -32,10 +32,7 @@ impl ObjectStorageClient {
         data: Bytes,
         content_type: Option<&str>,
     ) -> Result<(), StorageError> {
-        let url = format!(
-            "{}/buckets/{}/objects/{}",
-            self.base_url, self.bucket, key
-        );
+        let url = format!("{}/buckets/{}/objects/{}", self.base_url, self.bucket, key);
 
         let mut req = self.client.put(&url).body(data);
 
@@ -56,10 +53,7 @@ impl ObjectStorageClient {
     }
 
     pub async fn download(&self, key: &str) -> Result<Bytes, StorageError> {
-        let url = format!(
-            "{}/buckets/{}/objects/{}",
-            self.base_url, self.bucket, key
-        );
+        let url = format!("{}/buckets/{}/objects/{}", self.base_url, self.bucket, key);
 
         let response = self.client.get(&url).send().await?;
 
@@ -74,10 +68,7 @@ impl ObjectStorageClient {
     }
 
     pub async fn delete(&self, key: &str) -> Result<(), StorageError> {
-        let url = format!(
-            "{}/buckets/{}/objects/{}",
-            self.base_url, self.bucket, key
-        );
+        let url = format!("{}/buckets/{}/objects/{}", self.base_url, self.bucket, key);
 
         let response = self.client.delete(&url).send().await?;
 

@@ -159,7 +159,7 @@ pub async fn list_files(
 ) -> Result<Json<ListFilesResponse>, AppError> {
     let mut conn = state.db_pool.get().map_err(|_| AppError::DatabaseError)?;
 
-    let limit = query.limit.unwrap_or(10).min(100).max(1);
+    let limit = query.limit.unwrap_or(10).clamp(1, 100);
     let order = query.order.unwrap_or_else(|| "desc".to_string());
 
     let mut base_query = files::table.into_boxed();

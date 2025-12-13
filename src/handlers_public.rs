@@ -25,9 +25,11 @@ pub async fn upload_file(
     let mut filename: Option<String> = None;
     let mut purpose_slug: Option<String> = None;
 
-    while let Some(field) = multipart.next_field().await.map_err(|e| {
-        AppError::BadRequest(format!("Failed to read multipart field: {}", e))
-    })? {
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|e| AppError::BadRequest(format!("Failed to read multipart field: {}", e)))?
+    {
         let field_name = field.name().unwrap_or("").to_string();
 
         match field_name.as_str() {
@@ -59,8 +61,7 @@ pub async fn upload_file(
     }
 
     let file_data = file_data.ok_or_else(|| AppError::BadRequest("Missing file".to_string()))?;
-    let filename =
-        filename.ok_or_else(|| AppError::BadRequest("Missing filename".to_string()))?;
+    let filename = filename.ok_or_else(|| AppError::BadRequest("Missing filename".to_string()))?;
     let purpose_slug =
         purpose_slug.ok_or_else(|| AppError::BadRequest("Missing purpose".to_string()))?;
 

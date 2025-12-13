@@ -38,7 +38,10 @@ async fn setup_test_router() -> (Router, cargo_hold::app_state::AppState, Server
 
     let router = Router::new()
         .route("/files", axum::routing::post(handlers_public::upload_file))
-        .route("/files/:file_id", axum::routing::get(handlers_public::get_file))
+        .route(
+            "/files/:file_id",
+            axum::routing::get(handlers_public::get_file),
+        )
         .route(
             "/files/:file_id/content",
             axum::routing::get(handlers_public::get_file_content),
@@ -63,7 +66,10 @@ async fn setup_test_router() -> (Router, cargo_hold::app_state::AppState, Server
             "/admin/files",
             axum::routing::get(handlers_private::list_files),
         )
-        .route("/admin/links", axum::routing::post(handlers_private::create_link))
+        .route(
+            "/admin/links",
+            axum::routing::post(handlers_private::create_link),
+        )
         .route(
             "/admin/links/:link_id",
             axum::routing::get(handlers_private::get_link),
@@ -257,7 +263,9 @@ async fn test_create_and_delete_link() {
         .uri("/admin/links")
         .method("POST")
         .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(serde_json::to_string(&create_link_body).unwrap()))
+        .body(Body::from(
+            serde_json::to_string(&create_link_body).unwrap(),
+        ))
         .unwrap();
 
     let response = router.clone().oneshot(request).await.unwrap();

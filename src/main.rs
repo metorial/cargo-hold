@@ -45,14 +45,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     db::run_migrations(&mut conn)?;
     tracing::info!("Database migrations completed");
 
-    let snowflake_gen =
-        SnowflakeGeneratorWrapper::new(config.worker_id, config.datacenter_id)?;
+    let snowflake_gen = SnowflakeGeneratorWrapper::new(config.worker_id, config.datacenter_id)?;
 
     startup::upsert_purposes(&mut conn, &snowflake_gen, &config.allowed_purposes)?;
     tracing::info!("Purposes upserted");
 
-    let storage_client =
-        ObjectStorageClient::new(config.storage_base_url.clone(), config.storage_bucket.clone());
+    let storage_client = ObjectStorageClient::new(
+        config.storage_base_url.clone(),
+        config.storage_bucket.clone(),
+    );
 
     let state = AppState::new(db_pool, storage_client, snowflake_gen, config.clone());
 
@@ -68,7 +69,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/files/:file_id/content",
             get(handlers_public::get_file_content),
         )
-        .route("/f/:link_key", get(handlers_unauthenticated::get_file_by_link))
+        .route(
+            "/f/:link_key",
+            get(handlers_unauthenticated::get_file_by_link),
+        )
         .layer(cors.clone())
         .with_state(state.clone());
 
@@ -92,13 +96,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let public_listener = tokio::net::TcpListener::bind(&public_addr).await?;
     let private_listener = tokio::net::TcpListener::bind(&private_addr).await?;
 
-    let public_serve = tokio::spawn(async move {
-        axum::serve(public_listener, public_app).await
-    });
+    let public_serve = tokio::spawn(async move { axum::serve(public_listener, public_app).await });
 
-    let private_serve = tokio::spawn(async move {
-        axum::serve(private_listener, private_app).await
-    });
+    let private_serve =
+        tokio::spawn(async move { axum::serve(private_listener, private_app).await });
 
     tokio::select! {
         result = public_serve => {
