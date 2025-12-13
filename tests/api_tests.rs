@@ -9,10 +9,16 @@ use cargo_hold::{
 };
 use diesel::prelude::*;
 use serde_json::json;
+use std::sync::Mutex;
 use tower::ServiceExt;
 
-async fn setup_test_router() -> (Router, cargo_hold::app_state::AppState) {
+static TEST_MUTEX: Mutex<()> = Mutex::new(());
+
+async fn setup_test_router() -> (Router, cargo_hold::app_state::AppState, std::sync::MutexGuard<'static, ()>) {
+    let guard = TEST_MUTEX.lock().unwrap();
     let state = create_test_app_state();
+
+    cleanup_test_db(&state.db_pool);
 
     let mut conn = state.db_pool.get().unwrap();
     startup::upsert_purposes(
@@ -66,12 +72,12 @@ async fn setup_test_router() -> (Router, cargo_hold::app_state::AppState) {
         )
         .with_state(state.clone());
 
-    (router, state)
+    (router, state, guard)
 }
 
 #[tokio::test]
 async fn test_upload_file_missing_tenant_header() {
-    let (router, state) = setup_test_router().await;
+    let (router, state, _guard) = setup_test_router().await;
 
     let boundary = "----WebKitFormBoundary";
     let body = format!(
@@ -97,7 +103,7 @@ async fn test_upload_file_missing_tenant_header() {
 
 #[tokio::test]
 async fn test_get_file_not_found() {
-    let (router, state) = setup_test_router().await;
+    let (router, state, _guard) = setup_test_router().await;
 
     let request = Request::builder()
         .uri("/files/file_nonexistent")
@@ -114,7 +120,7 @@ async fn test_get_file_not_found() {
 
 #[tokio::test]
 async fn test_list_files_pagination() {
-    let (router, state) = setup_test_router().await;
+    let (router, state, _guard) = setup_test_router().await;
 
     let mut conn = state.db_pool.get().unwrap();
 
@@ -171,7 +177,7 @@ async fn test_list_files_pagination() {
 
 #[tokio::test]
 async fn test_update_file() {
-    let (router, state) = setup_test_router().await;
+    let (router, state, _guard) = setup_test_router().await;
 
     let mut conn = state.db_pool.get().unwrap();
 
