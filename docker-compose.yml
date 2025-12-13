@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: cargo_hold
+      POSTGRES_USER: cargo_hold
+      POSTGRES_PASSWORD: cargo_hold_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cargo_hold"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  object-storage:
+    image: ghcr.io/metorial/object-storage:latest
+    ports:
+      - "8082:8080"
+    environment:
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8080
+      BACKEND_TYPE: local
+      BACKEND_ROOT_PATH: /data
+    volumes:
+      - storage_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  cargo-hold:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      DATABASE_URL: postgres://cargo_hold:cargo_hold_password@postgres/cargo_hold
+      PUBLIC_HOST: 0.0.0.0
+      PUBLIC_PORT: 8080
+      PRIVATE_HOST: 0.0.0.0
+      PRIVATE_PORT: 8081
+      STORAGE_BASE_URL: http://object-storage:8080
+      STORAGE_BUCKET: cargo-hold
+      MAX_FILE_SIZE_BYTES: 104857600
+      ALLOWED_PURPOSES: user-upload,document,image,avatar
+      WORKER_ID: 1
+      DATACENTER_ID: 1
+      RUST_LOG: info,cargo_hold=debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      object-storage:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  storage_data:
