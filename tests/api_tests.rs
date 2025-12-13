@@ -14,7 +14,11 @@ use tower::ServiceExt;
 
 static TEST_MUTEX: Mutex<()> = Mutex::new(());
 
-async fn setup_test_router() -> (Router, cargo_hold::app_state::AppState, std::sync::MutexGuard<'static, ()>) {
+async fn setup_test_router() -> (
+    Router,
+    cargo_hold::app_state::AppState,
+    std::sync::MutexGuard<'static, ()>,
+) {
     let guard = TEST_MUTEX.lock().unwrap();
     let state = create_test_app_state();
 
