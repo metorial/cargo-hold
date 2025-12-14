@@ -1,4 +1,4 @@
-# cargo-hold
+# Cargo Hold
 
 A multi-tenant file upload service that handles file metadata and storage coordination. Files are uploaded through authenticated APIs, stored in the [Metorial object storage service](https://github.com/metorial/object-storage), and can be shared via public links.
 
